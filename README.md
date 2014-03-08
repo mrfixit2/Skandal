@@ -1,3 +1,5 @@
+![Logo](tools/misc/logo.png)
+
 Skandal
 =======
 
@@ -18,7 +20,7 @@ This project requires:
 
 Building
 --------
- 
+
 This project uses the Cross-platform Make (CMake) build system. However, I
 have conveniently provided a wrapper configure script and Makefile so that
 the typical build invocation of "./configure" followed by "make" will work.
@@ -31,13 +33,13 @@ Automatic Deployment
 --------------------
 
 I've provided a Vagrantfile for fast and easy setup of the development
-environment. So cloning the repository and doing a 
+environment. So cloning the repository and doing a
 ```Shell
 vagrant up
 ```
 should be enough to get you started. The build directory with a generated
 CodeBlocks project file will be located at the desktop folder, inside
-the cloned repository and there inside the build folder. 
+the cloned repository and there inside the build folder.
 Visit http://www.vagrantup.com/ for further information.
 
 Contributing
