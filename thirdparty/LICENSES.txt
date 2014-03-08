@@ -1,0 +1,17 @@
+== Boost ==
+Boost Software License (http://www.boost.org/LICENSE_1_0.txt)
+
+== Qt ==
+LGPL License (http://www.gnu.org/licenses/lgpl.html)
+
+== VTK ==
+BSD License (http://opensource.org/licenses/bsd-license.php)
+
+== OpenCV == 
+BSD License (http://opensource.org/licenses/bsd-license.php)
+
+== aruco ==
+BSD License (http://opensource.org/licenses/bsd-license.php)
+
+== libdc1394 ==
+LGPL License (http://www.gnu.org/licenses/lgpl.html)
