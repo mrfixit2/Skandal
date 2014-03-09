@@ -10,6 +10,7 @@ This project requires:
  * GNU Make or equivalent.
  * GCC or an alternative, reasonably conformant C++ compiler.
  * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES]
+ * Intel Threading Building Blocks v4.2+
  * Qt Framework v4.5+
  * VTK Framework v5.10+
  * OpenCV v2.4+

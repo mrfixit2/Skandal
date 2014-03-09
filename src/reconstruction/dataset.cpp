@@ -4,6 +4,11 @@ DataSet::DataSet() {
     
 }
 
+DataSet::DataSet(string directory) {
+    
+    read(directory);
+}
+
 DataSet::~DataSet() {
     
 }

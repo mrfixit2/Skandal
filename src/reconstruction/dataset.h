@@ -31,12 +31,13 @@ class DataSet {
     
 public:
     DataSet();
+    DataSet(string directory);
     ~DataSet();
     bool read(string directory);
+    vector<camera> cameras;
     
 private:
     bool isValid(cv::Mat K, cv::Mat dist);
-    vector<camera> cameras;
     cv::Mat K, dist;
 };
 
