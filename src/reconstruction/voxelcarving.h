@@ -9,6 +9,15 @@
 #include "dataset.h"
 #include "../imaging/segmentation.h"
 
+struct boundingbox {
+    float xmin;
+    float xmax;
+    float ymin;
+    float ymax;
+    float zmin;
+    float zmax;
+};
+
 class VoxelCarving {
     
 public:
@@ -16,6 +25,7 @@ public:
     ~VoxelCarving();
     
 private:
+    boundingbox getBoundingBox(camera cam1, camera cam2);
     cv::Rect getBoundingRect(cv::Mat imageMask);
     DataSet _ds;
     
