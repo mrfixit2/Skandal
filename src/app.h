@@ -5,6 +5,8 @@
 #include <QtGui>
 #include <boost/shared_ptr.hpp>
 
+#include "reconstruction/dataset.h"
+
 class App : public QApplication {
     
     Q_OBJECT
