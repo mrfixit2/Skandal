@@ -11,7 +11,13 @@ VoxelCarving::VoxelCarving(DataSet ds) : _ds(ds) {
     camera cam1 = _ds.cameras[0];
     camera cam2 = _ds.cameras[_ds.cameras.size()/4];
     boundingbox bb = getBoundingBox(cam1, cam2);
+    params = getStartParameter(bb);
     
+    voxels = new float[voxelGridSize];
+    std::fill_n(voxels, voxelGridSize, 1000.0);
+    for (int i = 0; i < _ds.cameras.size(); i++) {
+        carve(_ds.cameras[i]);
+    }
 }
 
 VoxelCarving::~VoxelCarving() {
@@ -61,12 +67,12 @@ cv::Rect VoxelCarving::getBoundingRect(cv::Mat mask) {
  *               /  |     |       /  |                 +
  *              +---+---x5|------+   |                /|
  *              |   |     |      |   |               / |
- *              |   |     |    /y-axis              /  |
+ *              |   |     |    / y-axis             /  |
  *              |   |     |   /  |   |             /   |
  *              |   |     |  /   |   |            / p8 |
  *              |   +-----|-x7---+---+           /  /| |
- *              |  /      |/ x-axis  /          +  / | |
- *              | x2      * ---- | x3           | p5 p7|
+ *              |  /      |/ x-axis /           +  / | |
+ *              | x2      * -----|-x3---        | p5 p7|
  *              |/               |/             | | /  +
  *              +-------x6-------+              | |/  /
  *                      /                       | p6 /
@@ -115,4 +121,85 @@ boundingbox VoxelCarving::getBoundingBox(camera cam1, camera cam2) {
     bb.zmax = x3.at<float>(0, 1);
     
     return bb;
+}
+
+voxelGridParams VoxelCarving::getStartParameter(boundingbox bb) {
+    
+    voxelGridParams params;
+    
+    float bbwidth = std::abs(bb.xmax-bb.xmin)*1.15;
+    float bbheight = std::abs(bb.ymax-bb.ymin)*1.15;
+    float bbdepth = std::abs(bb.zmax-bb.zmin)*1.05;
+    
+    params.startX = bb.xmin-std::abs(bb.xmax-bb.xmin)*0.10;
+    params.startY = bb.ymin-std::abs(bb.ymax-bb.ymin)*0.10;
+    params.startZ = 0.0f;
+    
+    params.voxelWidth = bbwidth/voxelDimension;
+    params.voxelHeight = bbheight/voxelDimension;
+    params.voxelDepth = bbdepth/voxelDimension;
+    
+    return params;
+}
+
+cv::Point2i VoxelCarving::project(camera cam, voxel v) {
+    
+    cv::Point2i coord;
+    
+    /* project voxel into camera image coords */
+    float z =   cam.P.at<float>(2, 0) * v.xpos +
+                cam.P.at<float>(2, 1) * v.ypos +
+                cam.P.at<float>(2, 2) * v.zpos +
+                cam.P.at<float>(2, 3);
+    
+    coord.y =   (cam.P.at<float>(1, 0) * v.xpos +
+                 cam.P.at<float>(1, 1) * v.ypos +
+                 cam.P.at<float>(1, 2) * v.zpos +
+                 cam.P.at<float>(1, 3)) / z;
+    
+    coord.x =   (cam.P.at<float>(0, 0) * v.xpos +
+                 cam.P.at<float>(0, 1) * v.ypos +
+                 cam.P.at<float>(0, 2) * v.zpos +
+                 cam.P.at<float>(0, 3)) / z;
+    
+    return coord;
+}
+
+void VoxelCarving::carve(camera cam) {
+    
+    cv::Mat silhouette, distImage;
+    cv::Canny(cam.mask, silhouette, 0, 255);
+    cv::bitwise_not(silhouette, silhouette);
+    cv::distanceTransform(silhouette, distImage, CV_DIST_L2, 3);
+    
+    for (int x = 0; x < voxelDimension; x++) {
+        for (int y = 0; y < voxelDimension; y++) {
+            for (int z = 0; z < voxelDimension; z++) {
+
+                /* calc voxel position inside camera view frustum */
+                voxel v;
+                v.xpos = params.startX + x * params.voxelWidth;
+                v.ypos = params.startY + y * params.voxelHeight;
+                v.zpos = params.startZ + z * params.voxelDepth;
+                v.value = 1.0f;
+                
+                cv::Point2i coord = project(cam, v);
+                float dist = -1.0f;
+                
+                /* test, if projected voxel is within image coords */
+                if (coord.x > 0 && coord.y > 0 && coord.x < cam.image.cols && coord.y < cam.image.rows) {
+                    dist = distImage.at<float>(coord.y, coord.x);
+                    if (cam.mask.at<uchar>(coord.y, coord.x) == 0) { /* outside */
+                        dist *= -1.0f;
+                    }
+                }
+                
+                /* remember smallest distance between voxel and silhouette */
+                if (dist < voxels[x*voxelGridSlize+y*voxelDimension+z]) {
+                    voxels[x*voxelGridSlize+y*voxelDimension+z] = dist;
+                }
+                
+            }
+        }
+    }
 }
