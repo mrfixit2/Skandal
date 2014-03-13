@@ -111,10 +111,10 @@ boundingbox VoxelCarving::getBoundingBox(camera cam1, camera cam2) {
     cv::Mat x2 = cv::norm(t1)*cam1.K.inv()*p2;
     cv::Mat x3 = cv::norm(t1)*cam1.K.inv()*p3;
     cv::Mat x4 = cv::norm(t1)*cam1.K.inv()*p4;
-    cv::Mat x5 = cv::norm(t2)*cam1.K.inv()*p5;
-    cv::Mat x6 = cv::norm(t2)*cam1.K.inv()*p6;
-    cv::Mat x7 = cv::norm(t2)*cam1.K.inv()*p7;
-    cv::Mat x8 = cv::norm(t2)*cam1.K.inv()*p8;
+    cv::Mat x5 = cv::norm(t2)*cam2.K.inv()*p5;
+    cv::Mat x6 = cv::norm(t2)*cam2.K.inv()*p6;
+    cv::Mat x7 = cv::norm(t2)*cam2.K.inv()*p7;
+    cv::Mat x8 = cv::norm(t2)*cam2.K.inv()*p8;
     
     bb.xmin = x2.at<float>(0, 0);
     bb.xmax = x3.at<float>(0, 0);
@@ -130,17 +130,17 @@ voxelGridParams VoxelCarving::getStartParameter(boundingbox bb) {
     
     voxelGridParams params;
     
-    float bbwidth = std::abs(bb.xmax-bb.xmin)*1.15;
-    float bbheight = std::abs(bb.ymax-bb.ymin)*1.15;
-    float bbdepth = std::abs(bb.zmax-bb.zmin)*1.05;
+    float bbwidth = std::abs(bb.xmax-bb.xmin)*1.1;
+    float bbdepth = std::abs(bb.ymax-bb.ymin)*1.0;
+    float bbheight = std::abs(bb.zmax-bb.zmin)*0.9;
     
-    params.startX = bb.xmin-std::abs(bb.xmax-bb.xmin)*0.10;
-    params.startY = bb.ymin-std::abs(bb.ymax-bb.ymin)*0.10;
+    params.startY = bb.xmin-std::abs(bb.xmax-bb.xmin)*0.2;
+    params.startX = bb.ymin-std::abs(bb.ymax-bb.ymin)*0.1;
     params.startZ = 0.0f;
     
-    params.voxelWidth = bbwidth/voxelDimension;
-    params.voxelHeight = bbheight/voxelDimension;
-    params.voxelDepth = bbdepth/voxelDimension;
+    params.voxelWidth = bbdepth/voxelDimension;
+    params.voxelHeight = bbwidth/voxelDimension;
+    params.voxelDepth = bbheight/voxelDimension;
     
     return params;
 }
