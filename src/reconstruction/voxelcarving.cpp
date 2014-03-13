@@ -18,6 +18,7 @@ VoxelCarving::VoxelCarving(DataSet ds) : _ds(ds) {
     for (int i = 0; i < _ds.cameras.size(); i++) {
         carve(_ds.cameras[i]);
     }
+    Export::asPly("export.ply", voxelDimension, voxels, params);
 }
 
 VoxelCarving::~VoxelCarving() {
@@ -56,6 +57,8 @@ cv::Rect VoxelCarving::getBoundingRect(cv::Mat mask) {
  * system.
  * With the two given camera projection matrices one can project
  * the four edges of each 2D bounding rect into world coords.
+ * @param cam1 first camera
+ * @param cam2 second, orthogonal camera
  *
  *
  *                        | z-axis
