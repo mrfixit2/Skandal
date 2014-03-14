@@ -32,12 +32,15 @@ bool DataSet::read(std::string directory) {
 
     /* read in camera images */
     path dir(directory);
-    string ext = ".png";
-    cameras.clear();
     
+    /* acceptable image formats */
+    string exts[] = {".png", ".jpg"};
+    vector<string> extensions(exts, exts + sizeof(exts) / sizeof(string));
+    
+    cameras.clear();
     for (directory_iterator it(dir); it != directory_iterator(); ++it) {
-        if (is_regular_file(it->status()) && it->path().extension().string() == ext) {
-            std::string filename = it->path().string();
+        if (is_regular_file(it->status()) && find(begin(extensions), end(extensions), it->path().extension().string()) != end(extensions)) {
+            string filename = it->path().string();
             camera cam;
             cam.image = cv::imread(filename);
             cameras.push_back(cam);
@@ -46,7 +49,7 @@ bool DataSet::read(std::string directory) {
     
     /* no images found */
     if (cameras.size() == 0) {
-        std::cerr << "Error: no images found (tried with .png extension)" << std::endl;
+        cerr << "Error: no images found" << endl;
         return false;
     }
     
