@@ -6,12 +6,15 @@
 #include <boost/shared_ptr.hpp>
 
 #include "reconstruction/dataset.h"
+#include "reconstruction/voxelcarving.h"
+
+using namespace std;
 
 class App : public QApplication {
     
     Q_OBJECT
 public:
-    App(int& argc, char** argv);
+    App(int argc, char* argv[]);
     ~App();
     
     App* INSTANCE();
@@ -30,9 +33,7 @@ public:
     
 private:
     void initGUI();
-    void interactiveMain();
-    void consoleMain();
-    
+    void parseCommandline(int argc, char* argv[]);
     void printHelpMessage();
     void printVersionMessage();
     void printVersionTripletMessage();
@@ -40,7 +41,7 @@ private:
     void setPreference(const std::string& key, const std::string& val);
     void unsetPreference(const std::string& key);
     void printPreference(const std::string& key)const;
-    void printAllPreferences()const;
+    void printAllPreferences() const;
     std::string getKeyName(const std::string& key)const;
     std::string getKeyRepr(const std::string& key)const;
     std::string convert(const QString& str)const;
@@ -49,9 +50,7 @@ private:
     
     static App* _instance;
     QString _invocation;
-    bool _console;
     bool _gui;
-    bool _interactive;
     boost::shared_ptr<QMainWindow> _mainwindow;
 };
 

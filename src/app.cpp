@@ -8,36 +8,34 @@
 #include "appinfo.h"
 
 namespace {
-    bool matches_option(const QString& givenoption, const QString& expectedoption, int mindashes=1, int maxdashes=2){
+    bool matches_option(const QString& givenoption, const QString& expectedoption, int mindashes=1, int maxdashes=2) {
         int dashes = 0;
-        if ( givenoption.length() > 0 ) {
-            while ((dashes<givenoption.length())&&(givenoption[dashes]=='-')){
+        if (givenoption.length() > 0) {
+            while ((dashes<givenoption.length()) && (givenoption[dashes]=='-')){
                 dashes++;
             }
         }
-        if ( (dashes < mindashes) || (dashes > maxdashes) ) {
+        if ((dashes < mindashes) || (dashes > maxdashes)) {
             return false;
         }
+        
         QString substr=givenoption.right(givenoption.length()-dashes);
-        return (expectedoption.compare(substr,Qt::CaseInsensitive)==0);
+        return (expectedoption.compare(substr,Qt::CaseInsensitive) == 0);
     }
 }
 
-inline std::ostream& operator<<(std::ostream& out, const QString& str) {
+inline ostream& operator<<(ostream& out, const QString& str) {
     QByteArray a = str.toUtf8();
     out << a.constData();
     return out;
 }
 
-App::App(int& argc, char** argv) : QApplication(argc,argv), _invocation(argv[0]), _console(false), _gui(false), _interactive(false) {
+App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0]), _gui(false) {
     
     /* enforce singleton property */
-    if ( _instance ){
-        throw std::runtime_error("Only one instance of App allowed.");
+    if (_instance) {
+        throw runtime_error("Only one instance of App allowed.");
     }
-    
-    /* remember if we are done */
-    bool done = false;
     
     /* set the singleton instance to this */
     _instance = this;
@@ -48,126 +46,13 @@ App::App(int& argc, char** argv) : QApplication(argc,argv), _invocation(argv[0])
     setOrganizationName(APPLICATION_VENDOR_NAME);
     setOrganizationDomain(APPLICATION_VENDOR_URL);
     
-    /* parse the commandline */
-    int idx = 1;
-    while ( idx < argc ) {
-        QString arg(argv[idx]);
-        if ( matches_option(arg,"help",0) || matches_option(arg,"h") || matches_option(arg,"?",0) ){
-            printHelpMessage();
-            std::exit(0);
-        } else if ( matches_option(arg,"version",0) ) {
-            printVersionMessage();
-            std::exit(0);
-        } else if ( matches_option(arg,"version-triplet") ) {
-            printVersionTripletMessage();
-            std::exit(0);
-        } else if ( matches_option(arg,"prefset") ) {
-            /* verify that there is another argument */
-            if ( (idx+1) >= argc ){
-                std::exit(1);
-            }
-            
-            /* increment the index */
-            idx++;
-            
-            /* get the next parameter */
-            std::string param(argv[idx]);
-            
-            /* determine if there is an equals sign. If there is, set the preference;
-             Otherwise, remove the preference */
-            size_t eqidx = param.find('=');
-            if ( eqidx != std::string::npos ){
-                std::string key = param.substr(0,eqidx);
-                std::string val = param.substr(eqidx+1);
-                setPreference(key,val);
-            } else {
-                unsetPreference(param);
-            }
-            done = true;
-        } else if ( matches_option(arg,"prefdel") ){
-            /* verify that there is another argument */
-            if ( (idx+1) >= argc ){
-                std::exit(1);
-            }
-            
-            /* increment the index */
-            idx++;
-            
-            /* get the next parameter */
-            std::string param(argv[idx]);
-            
-            /* remove the preference */
-            unsetPreference(param);
-            done = true;
-        } else if ( matches_option(arg,"preflist") ) {
-            printAllPreferences();
-            done = true;
-        } else if ( matches_option(arg,"prefget") ) {
-            /* verify that there is another argument */
-            if ( (idx+1) >= argc ){
-                std::exit(1);
-            }
-            
-            /* increment the index */
-            idx++;
-            
-            /* get the next parameter */
-            std::string param(argv[idx]);
-            
-            /* print the preference */
-            printPreference(param);
-            done = true;
-        } else if ( matches_option(arg,"loglevel") ) {
-            /* verify that there is another argument */
-            if ( (idx+1) >= argc ){
-                std::exit(1);
-            }
-            
-            /* increment the index */
-            idx++;
-            
-            /* get the next parameter */
-            std::string param(argv[idx]);
-            
-            /* determine if there is an equals sign and act accordingly */
-            size_t eqidx = param.find('=');
-            if ( eqidx != std::string::npos ) {
-                std::string logger = param.substr(0,eqidx);
-                std::string level  = param.substr(eqidx+1);
-            }
-        } else if ( matches_option(arg,"appid") || matches_option(arg,"application-identifier") ){
-            printApplicationIdentifier();
-            std::exit(0);
-        } else if ( matches_option(arg,"gui") ) {
-            if ( _interactive ){
-                std::exit(1);
-            }
-            if ( _gui ){
-            }
-            _gui = true;
-        } else if ( matches_option(arg,"interactive") ) {
-            if ( _gui ){
-                std::exit(1);
-            }
-            if ( _interactive ){
-            }
-            _interactive = true;
-        }
-        idx++;
-    }
+    /* remember if we are done */
+    parseCommandline(argc, argv);
     
-    if ( done ) {
-        std::exit(0);
-    }
-    
-    if (_console) {
-        consoleMain();
-        std::exit(EXIT_SUCCESS);
-    } else if (_interactive) {
-        interactiveMain();
-        std::exit(EXIT_SUCCESS);
-    } else {
+    if (_gui || argc == 1) {
         initGUI();
+    } else {
+        std::exit(EXIT_SUCCESS);
     }
 }
 
@@ -176,6 +61,79 @@ App::~App() {
 
 App* App::INSTANCE() {
     return _instance;
+}
+
+void App::parseCommandline(int argc, char* argv[]) {
+    
+    int idx = 1;
+    while (idx < argc) {
+        QString arg(argv[idx]);
+        if (matches_option(arg, "help", 2) || matches_option(arg, "h") || matches_option(arg, "?", 0)) {
+            printHelpMessage();
+            std::exit(0);
+        } else if (matches_option(arg, "version", 2) || matches_option(arg, "v")) {
+            printVersionMessage();
+            std::exit(EXIT_SUCCESS);
+        } else if (matches_option(arg, "version-triplet")) {
+            printVersionTripletMessage();
+            std::exit(EXIT_SUCCESS);
+        } else if (matches_option(arg, "dataset", 2) || matches_option(arg, "d")) {
+            /* verify that there is another argument */
+            if ((idx+1) >= argc) {
+                std::exit(EXIT_FAILURE);
+            }
+            
+            idx++;
+            DataSet ds(argv[idx]);
+            VoxelCarving vc(ds);
+        } else if (matches_option(arg,"prefset")) {
+            /* verify that there is another argument */
+            if ((idx+1) >= argc) {
+                std::exit(EXIT_FAILURE);
+            }
+            
+            idx++;
+            string param(argv[idx]);
+            /* determine if there is an equals sign. If there is, set the preference.
+             Otherwise, remove the preference */
+            size_t eqidx = param.find('=');
+            if (eqidx != string::npos){
+                string key = param.substr(0,eqidx);
+                string val = param.substr(eqidx+1);
+                setPreference(key,val);
+            } else {
+                unsetPreference(param);
+            }
+        } else if (matches_option(arg,"prefdel")){
+            /* verify that there is another argument */
+            if ( (idx+1) >= argc ){
+                std::exit(EXIT_FAILURE);
+            }
+            
+            idx++;
+            string param(argv[idx]);
+            /* remove the preference */
+            unsetPreference(param);
+        } else if (matches_option(arg,"preflist")) {
+            printAllPreferences();
+        } else if (matches_option(arg,"prefget")) {
+            /* verify that there is another argument */
+            if ( (idx+1) >= argc ){
+                std::exit(EXIT_FAILURE);
+            }
+            
+            idx++;
+            string param(argv[idx]);
+            /* print the preference */
+            printPreference(param);
+        } else if ( matches_option(arg,"appid") || matches_option(arg,"application-identifier") ){
+            printApplicationIdentifier();
+            std::exit(EXIT_SUCCESS);
+        } else if ( matches_option(arg,"gui") ) {
+            _gui = true;
+        }
+        idx++;
+    }
 }
 
 void App::initGUI() {
@@ -193,8 +151,8 @@ void App::initGUI() {
     int topmargin  = (desktopwidget->height()-preferredheight)/2;
     centralwidget->setWindowTitle(getProjectName());
     centralwidget->setFixedSize(preferredwidth,preferredheight);
-    std::auto_ptr<QLabel> label(new QLabel("Hello world!"));
-    std::auto_ptr<QGridLayout> layout(new QGridLayout);
+    auto_ptr<QLabel> label(new QLabel("Hello world!"));
+    auto_ptr<QGridLayout> layout(new QGridLayout);
     layout->addWidget(label.release(),0,0,Qt::AlignCenter);
     centralwidget->setLayout(layout.release());
     
@@ -210,44 +168,34 @@ void App::initGUI() {
     _mainwindow->move(leftmargin,topmargin);
 }
 
-void App::interactiveMain() {
-    std::cout << "Hello, " << getProjectName().toStdString() << "!" << std::endl;
-}
-
-void App::consoleMain() {
-    std::cout << "Hello, " << getProjectName().toStdString() << "!" << std::endl;
-}
-
 void App::printHelpMessage() {
     
-    std::cout << "Usage: " << getProjectInvocation() << " [options]" << std::endl;
-    std::cout << "Options:" << std::endl;
-    std::cout << "    --help                       Displays this help message." << std::endl;
-    std::cout << "    --version                    Prints the program version." << std::endl;
-    std::cout << "    --version-triplet            Prints the undecorated program version." << std::endl;
-    std::cout << "    --appid                      Prints the unique application identifier." << std::endl;
-    std::cout << "    --prefset <key>=<val>        Sets the given preference." << std::endl;
-    std::cout << "    --prefdel <key>              Unsets the given preference." << std::endl;
-    std::cout << "    --prefget <key>              Prints the given preference." << std::endl;
-    std::cout << "    --preflist                   Lists all preferences that are set." << std::endl;
-    std::cout << "    --loglevel <level>           Sets the current logging level." << std::endl;
-    std::cout << "    --loglevel <logger>=<level>  Sets the logging level for the given logger." << std::endl;
-    std::cout << "    --gui                        Run in graphical user interface mode." << std::endl;
-    std::cout << "    --interactive                Run in interactive commandline mode." << std::endl;
+    cout << "Usage: " << getProjectInvocation() << " [options]" << endl;
+    cout << "Options:" << endl;
+    cout << "    --help                       Displays this help message." << endl;
+    cout << "    --version                    Prints the program version." << endl;
+    cout << "    --version-triplet            Prints the undecorated program version." << endl;
+    cout << "    --appid                      Prints the unique application identifier." << endl;
+    cout << "    --dataset                    Reconstructs 3d object with given dataset." << endl;
+    cout << "    --prefset <key>=<val>        Sets the given preference." << endl;
+    cout << "    --prefdel <key>              Unsets the given preference." << endl;
+    cout << "    --prefget <key>              Prints the given preference." << endl;
+    cout << "    --preflist                   Lists all preferences that are set." << endl;
+    cout << "    --gui                        Run in graphical user interface mode." << endl;
 }
 
 void App::printVersionMessage() {
     
-    std::cout << getProjectName() << " v" << getProjectVersion() << std::endl;
-    std::cout << getProjectVendorName() << "; Copyright (C) " << getProjectCopyrightYears();
+    cout << getProjectName() << " v" << getProjectVersion() << endl;
+    cout << getProjectVendorName() << "; Copyright (C) " << getProjectCopyrightYears() << endl;
 }
 
 void App::printVersionTripletMessage() {
-    std::cout << getProjectVersion() << std::endl;
+    cout << getProjectVersion() << endl;
 }
 
 void App::printApplicationIdentifier() {
-    std::cout << getProjectID() << std::endl;
+    cout << getProjectID() << endl;
 }
 
 QString App::getProjectName() {
@@ -295,9 +243,9 @@ QString App::getProjectInvocation() {
     return _invocation;
 }
 
-std::string App::getKeyName(const std::string& key) const {
+string App::getKeyName(const string& key) const {
     
-    std::string result(key);
+    string result(key);
     for ( size_t i = 0; i < result.size(); i++ ){
         if ( (result[i]=='/') || (result[i]=='\\') ){
             result[i] = '.';
@@ -306,8 +254,8 @@ std::string App::getKeyName(const std::string& key) const {
     return result;
 }
 
-std::string App::getKeyRepr(const std::string& key) const {
-    std::string result(key);
+string App::getKeyRepr(const string& key) const {
+    string result(key);
     for ( size_t i = 0; i < result.size(); i++ ){
         if ( (result[i]=='/') || (result[i]=='\\') ){
             result[i] = '/';
@@ -316,18 +264,18 @@ std::string App::getKeyRepr(const std::string& key) const {
     return result;
 }
 
-void App::setPreference(const std::string& key, const std::string& val) {
+void App::setPreference(const string& key, const string& val) {
     QSettings settings;
-    std::string keyrep(getKeyRepr(key));
+    string keyrep(getKeyRepr(key));
     QString qkeyrep(keyrep.c_str());
     QString qval(val.c_str());
     settings.setValue(qkeyrep,qval);
     settings.sync();
 }
 
-void App::unsetPreference(const std::string& key) {
+void App::unsetPreference(const string& key) {
     QSettings settings;
-    std::string keyrep(getKeyRepr(key));
+    string keyrep(getKeyRepr(key));
     QString qkeyrep(keyrep.c_str());
     settings.beginGroup(qkeyrep);
     if ( (settings.childGroups().length()!=0) || (settings.childKeys().length()!=0) ){
@@ -339,15 +287,15 @@ void App::unsetPreference(const std::string& key) {
     settings.sync();
 }
 
-void App::printPreference(const std::string& key) const {
+void App::printPreference(const string& key) const {
     QSettings settings;
-    std::string keyrep(getKeyRepr(key));
+    string keyrep(getKeyRepr(key));
     QString qkeyrep(keyrep.c_str());
     QString result="undefined";
     if ( settings.contains(qkeyrep) ){
         result=settings.value(qkeyrep,QString("undefined")).toString();
     }
-    std::cout << result << std::endl;
+    cout << result << endl;
 }
 
 void App::printAllPreferences() const {
@@ -358,19 +306,19 @@ void App::printAllPreferences() const {
         QString qvalstr = settings.value(qkeystr).toString();
         
         if ( ! qvalstr.isEmpty() ){
-            std::string key=getKeyName(convert(qkeystr));
-            std::cout << key << "=" << qvalstr << std::endl;
+            string key=getKeyName(convert(qkeystr));
+            cout << key << "=" << qvalstr << endl;
         }
     }
 }
 
-std::string App::convert(const QString& str) const {
+string App::convert(const QString& str) const {
     QByteArray data = str.toUtf8();
-    std::string result(data.constData());
+    string result(data.constData());
     return result;
 }
 
-QString App::convert(const std::string& str) const {
+QString App::convert(const string& str) const {
     QString result(str.c_str());
     return result;
 }
