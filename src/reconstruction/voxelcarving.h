@@ -41,7 +41,7 @@ typedef struct {
 class VoxelCarving {
     
 public:
-    VoxelCarving(DataSet ds);
+    VoxelCarving(DataSet ds, const int voxelDimension = 32);
     ~VoxelCarving();
     /** Returns boundingbox of two orthogonal cams */
     boundingbox getBoundingBox(camera cam1, camera cam2);
@@ -54,9 +54,9 @@ private:
     DataSet _ds;
     float *voxels;
     voxelGridParams params;
-    const int voxelDimension = 32;
-    const int voxelGridSlize = voxelDimension*voxelDimension;
-    const int voxelGridSize = voxelDimension*voxelDimension*voxelDimension;
+    const int _voxelDimension;
+    int _voxelGridSlize;
+    int _voxelGridSize;
 };
 
 #endif

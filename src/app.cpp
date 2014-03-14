@@ -79,13 +79,16 @@ void App::parseCommandline(int argc, char* argv[]) {
             std::exit(EXIT_SUCCESS);
         } else if (matches_option(arg, "dataset", 2) || matches_option(arg, "d")) {
             /* verify that there is another argument */
-            if ((idx+1) >= argc) {
+            if ((idx+2) >= argc) {
                 std::exit(EXIT_FAILURE);
             }
             
             idx++;
-            DataSet ds(argv[idx]);
-            VoxelCarving vc(ds);
+            string path(argv[idx]);
+            idx++;
+            const int voxelDim = atoi(argv[idx]);
+            DataSet ds(path);
+            VoxelCarving vc(ds, voxelDim);
         } else if (matches_option(arg,"prefset")) {
             /* verify that there is another argument */
             if ((idx+1) >= argc) {
@@ -172,16 +175,16 @@ void App::printHelpMessage() {
     
     cout << "Usage: " << getProjectInvocation() << " [options]" << endl;
     cout << "Options:" << endl;
-    cout << "    --help                       Displays this help message." << endl;
-    cout << "    --version                    Prints the program version." << endl;
-    cout << "    --version-triplet            Prints the undecorated program version." << endl;
-    cout << "    --appid                      Prints the unique application identifier." << endl;
-    cout << "    --dataset                    Reconstructs 3d object with given dataset." << endl;
-    cout << "    --prefset <key>=<val>        Sets the given preference." << endl;
-    cout << "    --prefdel <key>              Unsets the given preference." << endl;
-    cout << "    --prefget <key>              Prints the given preference." << endl;
-    cout << "    --preflist                   Lists all preferences that are set." << endl;
-    cout << "    --gui                        Run in graphical user interface mode." << endl;
+    cout << "    --help                        Displays this help message." << endl;
+    cout << "    --version                     Prints the program version." << endl;
+    cout << "    --version-triplet             Prints the undecorated program version." << endl;
+    cout << "    --appid                       Prints the unique application identifier." << endl;
+    cout << "    --dataset <path> <dimension>  Reconstructs 3d object with given dataset path and voxel dimension." << endl;
+    cout << "    --prefset <key>=<val>         Sets the given preference." << endl;
+    cout << "    --prefdel <key>               Unsets the given preference." << endl;
+    cout << "    --prefget <key>               Prints the given preference." << endl;
+    cout << "    --preflist                    Lists all preferences that are set." << endl;
+    cout << "    --gui                         Run in graphical user interface mode." << endl;
 }
 
 void App::printVersionMessage() {

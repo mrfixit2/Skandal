@@ -1,6 +1,10 @@
 #include "voxelcarving.h"
 
-VoxelCarving::VoxelCarving(DataSet ds) : _ds(ds) {
+VoxelCarving::VoxelCarving(DataSet ds, const int voxelDimension) : _ds(ds), _voxelDimension(voxelDimension) {
+    
+    /* voxelgrid dimensions */
+    _voxelGridSlize = _voxelDimension*_voxelDimension;
+    _voxelGridSize = _voxelDimension*_voxelDimension*_voxelDimension;
     
     /* segment images */
     Segmentation::binarize(&_ds, cv::Scalar(0,0,40), cv::Scalar(255,255,255));
@@ -13,8 +17,8 @@ VoxelCarving::VoxelCarving(DataSet ds) : _ds(ds) {
     boundingbox bb = getBoundingBox(cam1, cam2);
     params = getStartParameter(bb);
     
-    voxels = new float[voxelGridSize];
-    std::fill_n(voxels, voxelGridSize, 1000.0);
+    voxels = new float[_voxelGridSize];
+    std::fill_n(voxels, _voxelGridSize, 1000.0);
     for (int i = 0; i < _ds.cameras.size(); i++) {
         carve(_ds.cameras[i]);
     }
@@ -138,9 +142,9 @@ voxelGridParams VoxelCarving::getStartParameter(boundingbox bb) {
     params.startX = bb.ymin-std::abs(bb.ymax-bb.ymin)*0.1;
     params.startZ = 0.0f;
     
-    params.voxelWidth = bbdepth/voxelDimension;
-    params.voxelHeight = bbwidth/voxelDimension;
-    params.voxelDepth = bbheight/voxelDimension;
+    params.voxelWidth = bbdepth/_voxelDimension;
+    params.voxelHeight = bbwidth/_voxelDimension;
+    params.voxelDepth = bbheight/_voxelDimension;
     
     return params;
 }
@@ -175,9 +179,9 @@ void VoxelCarving::carve(camera cam) {
     cv::bitwise_not(silhouette, silhouette);
     cv::distanceTransform(silhouette, distImage, CV_DIST_L2, 3);
     
-    for (int x = 0; x < voxelDimension; x++) {
-        for (int y = 0; y < voxelDimension; y++) {
-            for (int z = 0; z < voxelDimension; z++) {
+    for (int x = 0; x < _voxelDimension; x++) {
+        for (int y = 0; y < _voxelDimension; y++) {
+            for (int z = 0; z < _voxelDimension; z++) {
 
                 /* calc voxel position inside camera view frustum */
                 voxel v;
@@ -198,8 +202,8 @@ void VoxelCarving::carve(camera cam) {
                 }
                 
                 /* remember smallest distance between voxel and silhouette */
-                if (dist < voxels[x*voxelGridSlize+y*voxelDimension+z]) {
-                    voxels[x*voxelGridSlize+y*voxelDimension+z] = dist;
+                if (dist < voxels[x*_voxelGridSlize+y*_voxelDimension+z]) {
+                    voxels[x*_voxelGridSlize+y*_voxelDimension+z] = dist;
                 }
                 
             }
