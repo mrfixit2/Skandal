@@ -31,7 +31,6 @@ struct camera {
 class DataSet {
     
 public:
-    DataSet();
     DataSet(string directory);
     ~DataSet();
     bool read(string directory);
