@@ -79,16 +79,22 @@ void App::parseCommandline(int argc, char* argv[]) {
             std::exit(EXIT_SUCCESS);
         } else if (matches_option(arg, "dataset", 2) || matches_option(arg, "d")) {
             /* verify that there is another argument */
-            if ((idx+2) >= argc) {
+            if ((idx+1) >= argc) {
                 std::exit(EXIT_FAILURE);
             }
             
             idx++;
             string path(argv[idx]);
-            idx++;
-            const int voxelDim = atoi(argv[idx]);
             DataSet ds(path);
-            VoxelCarving vc(ds, voxelDim);
+            /* using default voxel dimension if non is provided */
+            if ((idx+1) >= argc) {
+                VoxelCarving vc(ds);
+            } else {
+                idx++;
+                const int voxelDim = atoi(argv[idx]);
+                VoxelCarving vc(ds, voxelDim);
+            }
+            
         } else if (matches_option(arg,"prefset")) {
             /* verify that there is another argument */
             if ((idx+1) >= argc) {
