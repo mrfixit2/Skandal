@@ -1,9 +1,5 @@
 #include "dataset.h"
 
-DataSet::DataSet() {
-    
-}
-
 DataSet::DataSet(string directory) {
     
     read(directory);
