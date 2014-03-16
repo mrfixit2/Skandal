@@ -13,6 +13,7 @@
 #include "reconstruction/voxelcarving.h"
 
 using namespace std;
+namespace po = boost::program_options;
 
 class App : public QApplication {
     
@@ -37,8 +38,7 @@ public:
     
 private:
     void initGUI();
-    void parseCommandline(int argc, char* argv[]);
-    void printHelpMessage();
+    void setupCmdParser(int argc, char *argv[], po::variables_map &vm, po::options_description &desc);
     void printVersionMessage();
     void printVersionTripletMessage();
     void printApplicationIdentifier();
