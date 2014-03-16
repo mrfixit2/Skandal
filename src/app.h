@@ -1,9 +1,13 @@
 #ifndef HEADER_SRC_APP_H_INCLUDED
 #define HEADER_SRC_APP_H_INCLUDED
 
+#ifndef Q_MOC_RUN // See: https://bugreports.qt-project.org/browse/QTBUG-22829
+# include <boost/program_options.hpp>
+#endif
+
+#include <boost/shared_ptr.hpp>
 #include <QtCore>
 #include <QtGui>
-#include <boost/shared_ptr.hpp>
 
 #include "reconstruction/dataset.h"
 #include "reconstruction/voxelcarving.h"
