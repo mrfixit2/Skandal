@@ -13,6 +13,7 @@
 #include "reconstruction/voxelcarving.h"
 
 using namespace std;
+namespace po = boost::program_options;
 
 class App : public QApplication {
     
@@ -21,7 +22,7 @@ public:
     App(int argc, char* argv[]);
     ~App();
     
-    App* INSTANCE();
+    static App* INSTANCE();
     
     QString getProjectName();
     QString getProjectCodeName();
@@ -34,11 +35,12 @@ public:
     QString getProjectVersion();
     QString getProjectCopyrightYears();
     QString getProjectInvocation();
+    bool inVerboseMode();
+    bool inVerboseAsyncMode();
     
 private:
     void initGUI();
-    void parseCommandline(int argc, char* argv[]);
-    void printHelpMessage();
+    void setupCmdParser(int argc, char *argv[], po::variables_map &vm, po::options_description &desc);
     void printVersionMessage();
     void printVersionTripletMessage();
     void printApplicationIdentifier();
@@ -51,10 +53,11 @@ private:
     std::string convert(const QString& str)const;
     QString convert(const std::string& str)const;
     
-    
     static App* _instance;
     QString _invocation;
     bool _gui;
+    bool _verbose;
+    bool _verboseAsync;
     boost::shared_ptr<QMainWindow> _mainwindow;
 };
 

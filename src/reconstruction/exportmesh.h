@@ -10,14 +10,13 @@
 #include <vtkMarchingCubes.h>
 #include <vtkCleanPolyData.h>
 #include <vtkPolyDataMapper.h>
-#include "voxelcarving.h"
 
 using namespace std;
 
-class Export {
+class ExportMesh {
     
 public:
-    static void asPly(string filename, int voxelGridDimension, float *voxels, voxelGridParams params);
+    virtual void exportAsPly(string filename) = 0;
 };
 
 #endif

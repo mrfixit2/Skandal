@@ -25,6 +25,7 @@ struct camera {
     cv::Mat t;
     cv::Mat image;
     cv::Mat mask;
+    int number;
 };
 
 class DataSet {
