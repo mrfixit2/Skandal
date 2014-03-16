@@ -13,7 +13,7 @@ inline ostream& operator<<(ostream& out, const QString& str) {
     return out;
 }
 
-App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0]), _gui(false) {
+App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0]), _gui(false), _verbose(false), _verboseAsync(false) {
     
     /* enforce singleton property */
     if (_instance) {
@@ -39,6 +39,14 @@ App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0])
         initGUI();
     }
     
+    if (vm.count("verbose")) {
+        _verbose = true;
+    }
+    
+    if (vm.count("verboseasync")) {
+        _verboseAsync = true;
+    }
+    
     if (vm.count("help")) {
         cout << desc << endl;
         std::exit(EXIT_SUCCESS);
@@ -61,7 +69,7 @@ App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0])
     
     if (vm.count("dataset")) {
         DataSet ds(vm["dataset"].as<string>());
-        VoxelCarving vc(ds, vm["voxeldim"].as<int>());
+        VoxelCarving vc(ds, vm["voxeldim"].as<int>(), vm["segmentation"].as<string>());
         vc.exportAsPly(vm["output"].as<string>());
     }
     
@@ -91,6 +99,10 @@ App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0])
    
     /* if no gui is running, we're finished now */
     if (!_gui) {
+        /* don't close shown images automatically */
+        if (_verbose) {
+            cv::waitKey();
+        }
         std::exit(EXIT_SUCCESS);
     }
 }
@@ -112,11 +124,14 @@ void App::setupCmdParser(int argc, char *argv[], po::variables_map &vm, po::opti
     ("dataset,d",       po::value<string>(), "Reconstruct 3d model with given dataset path")
     ("voxeldim",        po::value<int>()->default_value(32), "Set the voxelgrid dimension (value must be power of two)")
     ("output,o",        po::value<string>()->default_value("export.ply"), "Set the output file name of the 3D reconstruction")
+    ("segmentation,s",  po::value<string>()->default_value("thresh"), "Set the segmentation method. Available options are thresh, grabcut")
     ("prefset",         po::value<string>(), "Set the given preference")
     ("prefdel",         po::value<string>(), "Unset the given preference")
     ("prefget",         po::value<string>(), "Display the given preference")
     ("preflist",        "List all preferences that are set")
-    ("gui",             "Run in graphical user interface mode");
+    ("gui",             "Run in graphical user interface mode")
+    ("verbose",         "Run in verbose mode")
+    ("verboseasync",    "Run in async verbose mode (write images to file instead of showing");
     
     try {
         po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -286,6 +301,16 @@ void App::printAllPreferences() const {
             cout << key << "=" << qvalstr << endl;
         }
     }
+}
+
+bool App::inVerboseMode() {
+    
+    return _verbose;
+}
+
+bool App::inVerboseAsyncMode() {
+    
+    return _verboseAsync;
 }
 
 string App::convert(const QString& str) const {

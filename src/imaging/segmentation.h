@@ -1,6 +1,7 @@
 #ifndef SEGMENTATION_H
 #define SEGMENTATION_H
 
+#include <sstream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -10,6 +11,7 @@
 #include <tbb/task_scheduler_init.h>
 
 #include "../reconstruction/dataset.h"
+#include "../app.h"
 
 class Segmentation {
     

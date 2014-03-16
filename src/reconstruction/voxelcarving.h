@@ -29,6 +29,7 @@ typedef struct {
     float value; /**< Iso value of voxel */
 } voxel;
 
+#include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -37,11 +38,12 @@ typedef struct {
 #include "dataset.h"
 #include "../imaging/segmentation.h"
 #include "exportmesh.h"
+#include "../app.h"
 
 class VoxelCarving : public ExportMesh {
     
 public:
-    VoxelCarving(DataSet ds, const int voxelGridDimension = 32);
+    VoxelCarving(DataSet ds, const int voxelGridDimension, string method);
     ~VoxelCarving();
     /** Returns boundingbox of two orthogonal cams */
     boundingbox getBoundingBox(camera cam1, camera cam2);

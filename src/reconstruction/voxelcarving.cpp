@@ -1,13 +1,17 @@
 #include "voxelcarving.h"
 
-VoxelCarving::VoxelCarving(DataSet ds, const int voxelGridDimension) : _ds(ds), _voxelGridDimension(voxelGridDimension) {
+VoxelCarving::VoxelCarving(DataSet ds, const int voxelGridDimension, string method) : _ds(ds), _voxelGridDimension(voxelGridDimension) {
     
     /* voxelgrid dimensions */
     _voxelGridSlize = _voxelGridDimension*_voxelGridDimension;
     _voxelGridSize = _voxelGridDimension*_voxelGridDimension*_voxelGridDimension;
     
     /* segment images */
-    Segmentation::binarize(&_ds, cv::Scalar(0,0,40), cv::Scalar(255,255,255));
+    if (method == "thresh") {
+        Segmentation::binarize(&_ds, cv::Scalar(0,0,40), cv::Scalar(255,255,255));
+    } else if (method == "grabcut") {
+        Segmentation::grabcut(&_ds);
+    }
     
     /* assuming round table scans we estimate that quarter amounts of 
        images are orthogonal to each other. As such, we calculate the 
@@ -98,6 +102,20 @@ boundingbox VoxelCarving::getBoundingBox(camera cam1, camera cam2) {
     boundingbox bb;
     cv::Rect rect1 = getBoundingRect(cam1.mask);
     cv::Rect rect2 = getBoundingRect(cam2.mask);
+    
+    if (App::INSTANCE()->inVerboseMode() || App::INSTANCE()->inVerboseAsyncMode()) {
+        cv::Mat img1 = cam1.image.clone();
+        cv::rectangle(img1, rect1, cv::Scalar(0,0,255));
+        cv::Mat img2 = cam2.image.clone();
+        cv::rectangle(img2, rect2, cv::Scalar(0,0,255));
+        if (App::INSTANCE()->inVerboseAsyncMode()) {
+            cv::imwrite("boundingrect1.png", img1);
+            cv::imwrite("boundingrect2.png", img2);
+        } else {
+            cv::imshow("bounding rect 1", img1);
+            cv::imshow("bounding rect 2", img2);
+        }
+    }
     
     cv::Mat t1 = (cam1.K.inv()*cam1.P).col(3);
     cv::Mat t2 = (cam2.K.inv()*cam2.P).col(3);

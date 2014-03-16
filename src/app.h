@@ -22,7 +22,7 @@ public:
     App(int argc, char* argv[]);
     ~App();
     
-    App* INSTANCE();
+    static App* INSTANCE();
     
     QString getProjectName();
     QString getProjectCodeName();
@@ -35,6 +35,8 @@ public:
     QString getProjectVersion();
     QString getProjectCopyrightYears();
     QString getProjectInvocation();
+    bool inVerboseMode();
+    bool inVerboseAsyncMode();
     
 private:
     void initGUI();
@@ -51,10 +53,11 @@ private:
     std::string convert(const QString& str)const;
     QString convert(const std::string& str)const;
     
-    
     static App* _instance;
     QString _invocation;
     bool _gui;
+    bool _verbose;
+    bool _verboseAsync;
     boost::shared_ptr<QMainWindow> _mainwindow;
 };
 
