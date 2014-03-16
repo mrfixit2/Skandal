@@ -38,28 +38,33 @@ App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0])
         _gui = true;
         initGUI();
     }
+    
     if (vm.count("help")) {
         cout << desc << endl;
         std::exit(EXIT_SUCCESS);
     }
+    
     if (vm.count("version")) {
         printVersionMessage();
         std::exit(EXIT_SUCCESS);
     }
+    
     if (vm.count("version-triplet")) {
         printVersionTripletMessage();
         std::exit(EXIT_SUCCESS);
     }
+    
     if (vm.count("appid")) {
         printApplicationIdentifier();
         std::exit(EXIT_SUCCESS);
     }
+    
     if (vm.count("dataset")) {
-        cout << "dataset: " << vm["dataset"].as<string>() << endl;
+        DataSet ds(vm["dataset"].as<string>());
+        VoxelCarving vc(ds, vm["voxeldim"].as<int>());
+        vc.exportAsPly(vm["output"].as<string>());
     }
-    if (vm.count("voxeldim")) {
-        cout << "voxeldim: " << vm["voxeldim"].as<int>() << endl;
-    }
+    
     if (vm.count("prefset")) {
         size_t eqidx = vm["prefset"].as<string>().find('=');
         if (eqidx != string::npos) {
@@ -70,12 +75,15 @@ App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0])
             unsetPreference(vm["prefset"].as<string>());
         }
     }
+    
     if (vm.count("prefdel")) {
         unsetPreference(vm["prefdel"].as<string>());
     }
+    
     if (vm.count("prefget")) {
         printPreference(vm["prefget"].as<string>());
     }
+    
     if (vm.count("preflist")) {
         printAllPreferences();
         std::exit(EXIT_SUCCESS);
@@ -103,6 +111,7 @@ void App::setupCmdParser(int argc, char *argv[], po::variables_map &vm, po::opti
     ("appid",           "Display the unique application identifier")
     ("dataset,d",       po::value<string>(), "Reconstruct 3d model with given dataset path")
     ("voxeldim",        po::value<int>()->default_value(32), "Set the voxelgrid dimension (value must be power of two)")
+    ("output,o",        po::value<string>()->default_value("export.ply"), "Set the output file name of the 3D reconstruction")
     ("prefset",         po::value<string>(), "Set the given preference")
     ("prefdel",         po::value<string>(), "Unset the given preference")
     ("prefget",         po::value<string>(), "Display the given preference")

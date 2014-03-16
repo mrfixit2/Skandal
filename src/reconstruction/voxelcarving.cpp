@@ -1,10 +1,10 @@
 #include "voxelcarving.h"
 
-VoxelCarving::VoxelCarving(DataSet ds, const int voxelDimension) : _ds(ds), _voxelDimension(voxelDimension) {
+VoxelCarving::VoxelCarving(DataSet ds, const int voxelGridDimension) : _ds(ds), _voxelGridDimension(voxelGridDimension) {
     
     /* voxelgrid dimensions */
-    _voxelGridSlize = _voxelDimension*_voxelDimension;
-    _voxelGridSize = _voxelDimension*_voxelDimension*_voxelDimension;
+    _voxelGridSlize = _voxelGridDimension*_voxelGridDimension;
+    _voxelGridSize = _voxelGridDimension*_voxelGridDimension*_voxelGridDimension;
     
     /* segment images */
     Segmentation::binarize(&_ds, cv::Scalar(0,0,40), cv::Scalar(255,255,255));
@@ -22,7 +22,6 @@ VoxelCarving::VoxelCarving(DataSet ds, const int voxelDimension) : _ds(ds), _vox
     for (int i = 0; i < _ds.cameras.size(); i++) {
         carve(_ds.cameras[i]);
     }
-    Export::asPly("export.ply", voxelDimension, voxels, params);
 }
 
 VoxelCarving::~VoxelCarving() {
@@ -142,9 +141,9 @@ voxelGridParams VoxelCarving::getStartParameter(boundingbox bb) {
     params.startX = bb.ymin-std::abs(bb.ymax-bb.ymin)*0.1;
     params.startZ = 0.0f;
     
-    params.voxelWidth = bbdepth/_voxelDimension;
-    params.voxelHeight = bbwidth/_voxelDimension;
-    params.voxelDepth = bbheight/_voxelDimension;
+    params.voxelWidth = bbdepth/_voxelGridDimension;
+    params.voxelHeight = bbwidth/_voxelGridDimension;
+    params.voxelDepth = bbheight/_voxelGridDimension;
     
     return params;
 }
@@ -179,9 +178,9 @@ void VoxelCarving::carve(camera cam) {
     cv::bitwise_not(silhouette, silhouette);
     cv::distanceTransform(silhouette, distImage, CV_DIST_L2, 3);
     
-    for (int x = 0; x < _voxelDimension; x++) {
-        for (int y = 0; y < _voxelDimension; y++) {
-            for (int z = 0; z < _voxelDimension; z++) {
+    for (int x = 0; x < _voxelGridDimension; x++) {
+        for (int y = 0; y < _voxelGridDimension; y++) {
+            for (int z = 0; z < _voxelGridDimension; z++) {
 
                 /* calc voxel position inside camera view frustum */
                 voxel v;
@@ -202,11 +201,46 @@ void VoxelCarving::carve(camera cam) {
                 }
                 
                 /* remember smallest distance between voxel and silhouette */
-                if (dist < voxels[x*_voxelGridSlize+y*_voxelDimension+z]) {
-                    voxels[x*_voxelGridSlize+y*_voxelDimension+z] = dist;
+                if (dist < voxels[x*_voxelGridSlize+y*_voxelGridDimension+z]) {
+                    voxels[x*_voxelGridSlize+y*_voxelGridDimension+z] = dist;
                 }
                 
             }
         }
     }
+}
+
+void VoxelCarving::exportAsPly(string filename) {
+    
+    /* create vtk visualization pipeline from voxelgrid (float array) */
+    vtkSmartPointer<vtkStructuredPoints> points = vtkSmartPointer<vtkStructuredPoints>::New();
+    points->SetDimensions(_voxelGridDimension, _voxelGridDimension, _voxelGridDimension);
+    points->SetSpacing(params.voxelDepth, params.voxelHeight, params.voxelWidth);
+    points->SetOrigin(params.startZ, params.startY, params.startX);
+    points->SetScalarTypeToFloat();
+    
+    vtkSmartPointer<vtkFloatArray> vtkFArray = vtkSmartPointer<vtkFloatArray>::New();
+    vtkFArray->SetNumberOfValues(_voxelGridSize);
+    vtkFArray->SetArray(voxels, _voxelGridSize, 1);
+    points->GetPointData()->SetScalars(vtkFArray);
+    points->Update();
+    
+    /* create iso surface with marching cubes algorithm */
+    vtkSmartPointer<vtkMarchingCubes> mcubes = vtkSmartPointer<vtkMarchingCubes>::New();
+    mcubes->SetInputConnection(points->GetProducerPort());
+    mcubes->SetNumberOfContours(1);
+    mcubes->SetValue(0, 0.5);
+    mcubes->Update();
+    
+    /* recreate mesh topoloy and merge vertices */
+    vtkSmartPointer<vtkCleanPolyData> cleanPolyData = vtkSmartPointer<vtkCleanPolyData>::New();
+    cleanPolyData->SetInputConnection(mcubes->GetOutputPort());
+    cleanPolyData->Update();
+    
+    /* exports 3d model in ply format */
+    vtkSmartPointer<vtkPLYWriter> plyExporter = vtkSmartPointer<vtkPLYWriter>::New();
+    plyExporter->SetFileName(filename.c_str());
+    plyExporter->SetInputConnection(cleanPolyData->GetOutputPort());
+    plyExporter->Update();
+    plyExporter->Write();
 }
