@@ -39,7 +39,6 @@ void Segmentation::grabCutParallel(camera cam) {
     
     cv::compare(result, cv::GC_PR_FGD, result, cv::CMP_EQ);
     cam.mask = result.clone();
-    cv::bitwise_not(cam.mask, cam.mask);
     
     if (App::INSTANCE()->inVerboseMode()) {
         cv::imshow("segmented image (press any key to continue)", cam.mask);

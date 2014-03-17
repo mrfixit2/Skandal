@@ -40,16 +40,32 @@ typedef struct {
 #include "exportmesh.h"
 #include "../app.h"
 
+/** Reconstructing 3D shape of an object from given dataset
+ *
+ * With the segmented images of an object from multiple camera views this class
+ * reconstructs the maximum volume in 3D space which may have produced them.
+ * It requires a dataset with calibrated cameras (meaning intrinsic parameter
+ * and extrinsic parameter must be known) together with original camera images.
+ * The camera images will be automatically segmented before the reconstruction
+ * through a segmentation method provided through @ref Segmentation class */
 class VoxelCarving : public ExportMesh {
     
 public:
+    /** Constructor for voxel carving
+     * @param ds Dataset with calibrated cameras and segmented images 
+     * @param voxelGridDimension Used voxel grid dimension for reconstruction
+     * @param method Segmentation method. Available are thresh and grabcut */
     VoxelCarving(DataSet ds, const int voxelGridDimension, string method);
+    /** Destructor for voxel carving */
     ~VoxelCarving();
     /** Returns boundingbox of two orthogonal cams */
     boundingbox getBoundingBox(camera cam1, camera cam2);
+    /** Exports the reconstruction in ply object format
+     * @param filename Filename of the exported ply object */
     void exportAsPly(string filename);
     
 private:
+    /** Returns 2D boundingbox around object */
     cv::Rect getBoundingRect(cv::Mat imageMask);
     voxelGridParams getStartParameter(boundingbox bb);
     void carve(camera cam);
