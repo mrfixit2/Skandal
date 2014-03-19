@@ -38,10 +38,10 @@ cv::Rect VoxelCarving::getBoundingRect(cv::Mat mask) {
     int largestContourIdx = 0;
     
     std::vector< std::vector<cv::Point> > contours;
-    std::vector<cv::Vec4i> hierarchy;
     cv::Rect boundingRect;
     
-    cv::findContours(mask.clone(), contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+    cv::Mat maskCopy = mask.clone();
+    cv::findContours(maskCopy, contours, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
     for (int i = 0; i < contours.size(); i++) {
         double a = cv::contourArea(contours[i], false);
         if (a > largestArea) {
