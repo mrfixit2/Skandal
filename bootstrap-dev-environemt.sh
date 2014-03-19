@@ -13,9 +13,3 @@ cd aruco/trunk/
 mkdir build && cd build
 cmake ..
 make && sudo make install
-mkdir -p /home/vagrant/Desktop
-cd /home/vagrant/Desktop
-git clone https://github.com/NewProggie/Skandal.git
-cd Skandal && mkdir build && cd build
-cmake -G "CodeBlocks - Unix Makefiles" ..
-reboot

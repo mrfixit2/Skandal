@@ -25,3 +25,8 @@ bin/
 docs/
 src/appinfo.h
 
+# Vagrant machine
+.vagrant/
+
+# Other stuff
+.Trash-1000/
