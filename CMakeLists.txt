@@ -30,8 +30,8 @@ SET (CMAKE_MODULE_PATH "${MAINFOLDER}/tools/share/cmake")
 INCLUDE_DIRECTORIES("${MAINFOLDER}/include")
 
 # Locate Project Prerequisites 
-SET (Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.49" "1.49.0" "1.50" "1.50.0")
-FIND_PACKAGE (Boost 1.48 COMPONENTS "filesystem" "system" "program_options" REQUIRED)
+SET (Boost_ADDITIONAL_VERSIONS "1.46" "1.47" "1.48" "1.49" "1.50")
+FIND_PACKAGE (Boost 1.46 COMPONENTS "filesystem" "system" "program_options" REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 FIND_PACKAGE (TBB REQUIRED)
