@@ -21,7 +21,7 @@ install_manifest.txt
 CMakeLists.txt.user
 
 # Generated folders and files
-build/
+build*/
 bin/
 docs/
 src/appinfo.h
