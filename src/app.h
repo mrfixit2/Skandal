@@ -1,14 +1,19 @@
 #ifndef HEADER_SRC_APP_H_INCLUDED
 #define HEADER_SRC_APP_H_INCLUDED
 
+#ifndef Q_MOC_RUN // See: https://bugreports.qt-project.org/browse/QTBUG-22829
+# include <boost/program_options.hpp>
+#endif
+
+#include <boost/shared_ptr.hpp>
 #include <QtCore>
 #include <QtGui>
-#include <boost/shared_ptr.hpp>
 
 #include "reconstruction/dataset.h"
 #include "reconstruction/voxelcarving.h"
 
 using namespace std;
+namespace po = boost::program_options;
 
 class App : public QApplication {
     
@@ -17,7 +22,7 @@ public:
     App(int argc, char* argv[]);
     ~App();
     
-    App* INSTANCE();
+    static App* INSTANCE();
     
     QString getProjectName();
     QString getProjectCodeName();
@@ -30,11 +35,12 @@ public:
     QString getProjectVersion();
     QString getProjectCopyrightYears();
     QString getProjectInvocation();
+    bool inVerboseMode();
+    bool inVerboseAsyncMode();
     
 private:
     void initGUI();
-    void parseCommandline(int argc, char* argv[]);
-    void printHelpMessage();
+    void setupCmdParser(int argc, char *argv[], po::variables_map &vm, po::options_description &desc);
     void printVersionMessage();
     void printVersionTripletMessage();
     void printApplicationIdentifier();
@@ -47,10 +53,11 @@ private:
     std::string convert(const QString& str)const;
     QString convert(const std::string& str)const;
     
-    
     static App* _instance;
     QString _invocation;
     bool _gui;
+    bool _verbose;
+    bool _verboseAsync;
     boost::shared_ptr<QMainWindow> _mainwindow;
 };
 

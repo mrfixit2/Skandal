@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <vector>
 #include <iomanip> 
 
 #include <opencv2/core/core.hpp>
@@ -26,6 +25,7 @@ struct camera {
     cv::Mat t;
     cv::Mat image;
     cv::Mat mask;
+    int number;
 };
 
 class DataSet {

@@ -34,11 +34,13 @@ bool DataSet::read(std::string directory) {
     vector<string> extensions(exts, exts + sizeof(exts) / sizeof(string));
     
     cameras.clear();
+    int imgNumber = 0;
     for (directory_iterator it(dir); it != directory_iterator(); ++it) {
-        if (is_regular_file(it->status()) && find(begin(extensions), end(extensions), it->path().extension().string()) != end(extensions)) {
+        if (is_regular_file(it->status()) && find(boost::begin(extensions), boost::end(extensions), it->path().extension().string()) != boost::end(extensions)) {
             string filename = it->path().string();
             camera cam;
             cam.image = cv::imread(filename);
+            cam.number = imgNumber++;
             cameras.push_back(cam);
         }
     }

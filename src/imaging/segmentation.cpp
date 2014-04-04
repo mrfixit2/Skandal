@@ -7,6 +7,15 @@ void Segmentation::binarize(DataSet *ds, cv::Scalar startvals, cv::Scalar endval
         cv::Mat binary;
         cv::cvtColor(ds->cameras[i].image, ds->cameras[i].mask, CV_BGR2HSV);
         cv::inRange(ds->cameras[i].mask, startvals, endvals, ds->cameras[i].mask);
+        
+        if (App::INSTANCE()->inVerboseMode()) {
+            cv::imshow("segmented image (press any key to continue)", ds->cameras[i].mask);
+            cv::waitKey();
+        } else if (App::INSTANCE()->inVerboseAsyncMode()) {
+            std::stringstream s;
+            s << "segmentedimage_" << ds->cameras[i].number << ".png";
+            cv::imwrite(s.str(), ds->cameras[i].mask);
+        }
     }
     
 }
@@ -30,5 +39,13 @@ void Segmentation::grabCutParallel(camera cam) {
     
     cv::compare(result, cv::GC_PR_FGD, result, cv::CMP_EQ);
     cam.mask = result.clone();
-    cv::bitwise_not(cam.mask, cam.mask);
+    
+    if (App::INSTANCE()->inVerboseMode()) {
+        cv::imshow("segmented image (press any key to continue)", cam.mask);
+        cv::waitKey();
+    } else if (App::INSTANCE()->inVerboseAsyncMode()) {
+        std::stringstream s;
+        s << "segmentedimage_" << cam.number << ".png";
+        cv::imwrite(s.str(), cam.mask);
+    }
 }

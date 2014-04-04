@@ -7,30 +7,13 @@
 #include "app.h"
 #include "appinfo.h"
 
-namespace {
-    bool matches_option(const QString& givenoption, const QString& expectedoption, int mindashes=1, int maxdashes=2) {
-        int dashes = 0;
-        if (givenoption.length() > 0) {
-            while ((dashes<givenoption.length()) && (givenoption[dashes]=='-')){
-                dashes++;
-            }
-        }
-        if ((dashes < mindashes) || (dashes > maxdashes)) {
-            return false;
-        }
-        
-        QString substr=givenoption.right(givenoption.length()-dashes);
-        return (expectedoption.compare(substr,Qt::CaseInsensitive) == 0);
-    }
-}
-
 inline ostream& operator<<(ostream& out, const QString& str) {
     QByteArray a = str.toUtf8();
     out << a.constData();
     return out;
 }
 
-App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0]), _gui(false) {
+App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0]), _gui(false), _verbose(false), _verboseAsync(false) {
     
     /* enforce singleton property */
     if (_instance) {
@@ -46,12 +29,80 @@ App::App(int argc, char* argv[]) : QApplication(argc,argv), _invocation(argv[0])
     setOrganizationName(APPLICATION_VENDOR_NAME);
     setOrganizationDomain(APPLICATION_VENDOR_URL);
     
-    /* remember if we are done */
-    parseCommandline(argc, argv);
+    /* parsing command line arguments */
+    po::variables_map vm;
+    po::options_description desc("Skandal Command Line Options");
+    setupCmdParser(argc, argv, vm, desc);
     
-    if (_gui || argc == 1) {
+    if (argc == 1 || vm.count("gui")) {
+        _gui = true;
         initGUI();
-    } else {
+    }
+    
+    if (vm.count("verbose")) {
+        _verbose = true;
+    }
+    
+    if (vm.count("verboseasync")) {
+        _verboseAsync = true;
+    }
+    
+    if (vm.count("help")) {
+        cout << desc << endl;
+        std::exit(EXIT_SUCCESS);
+    }
+    
+    if (vm.count("version")) {
+        printVersionMessage();
+        std::exit(EXIT_SUCCESS);
+    }
+    
+    if (vm.count("version-triplet")) {
+        printVersionTripletMessage();
+        std::exit(EXIT_SUCCESS);
+    }
+    
+    if (vm.count("appid")) {
+        printApplicationIdentifier();
+        std::exit(EXIT_SUCCESS);
+    }
+    
+    if (vm.count("dataset")) {
+        DataSet ds(vm["dataset"].as<string>());
+        VoxelCarving vc(ds, vm["voxeldim"].as<int>(), vm["segmentation"].as<string>());
+        vc.exportAsPly(vm["output"].as<string>());
+    }
+    
+    if (vm.count("prefset")) {
+        size_t eqidx = vm["prefset"].as<string>().find('=');
+        if (eqidx != string::npos) {
+            string key = vm["prefset"].as<string>().substr(0,eqidx);
+            string val = vm["prefset"].as<string>().substr(eqidx+1);
+            setPreference(key, val);
+        } else {
+            unsetPreference(vm["prefset"].as<string>());
+        }
+    }
+    
+    if (vm.count("prefdel")) {
+        unsetPreference(vm["prefdel"].as<string>());
+    }
+    
+    if (vm.count("prefget")) {
+        printPreference(vm["prefget"].as<string>());
+    }
+    
+    if (vm.count("preflist")) {
+        printAllPreferences();
+        std::exit(EXIT_SUCCESS);
+    }
+   
+    /* if no gui is running, we're finished now */
+    if (!_gui) {
+        /* don't close shown images automatically */
+        if (_verbose) {
+            cv::waitKey();
+        }
         std::exit(EXIT_SUCCESS);
     }
 }
@@ -63,85 +114,32 @@ App* App::INSTANCE() {
     return _instance;
 }
 
-void App::parseCommandline(int argc, char* argv[]) {
+void App::setupCmdParser(int argc, char *argv[], po::variables_map &vm, po::options_description &desc) {
     
-    int idx = 1;
-    while (idx < argc) {
-        QString arg(argv[idx]);
-        if (matches_option(arg, "help", 2) || matches_option(arg, "h") || matches_option(arg, "?", 0)) {
-            printHelpMessage();
-            std::exit(0);
-        } else if (matches_option(arg, "version", 2) || matches_option(arg, "v")) {
-            printVersionMessage();
-            std::exit(EXIT_SUCCESS);
-        } else if (matches_option(arg, "version-triplet")) {
-            printVersionTripletMessage();
-            std::exit(EXIT_SUCCESS);
-        } else if (matches_option(arg, "dataset", 2) || matches_option(arg, "d")) {
-            /* verify that there is another argument */
-            if ((idx+1) >= argc) {
-                std::exit(EXIT_FAILURE);
-            }
-            
-            idx++;
-            string path(argv[idx]);
-            DataSet ds(path);
-            /* using default voxel dimension if non is provided */
-            if ((idx+1) >= argc) {
-                VoxelCarving vc(ds);
-            } else {
-                idx++;
-                const int voxelDim = atoi(argv[idx]);
-                VoxelCarving vc(ds, voxelDim);
-            }
-            
-        } else if (matches_option(arg,"prefset")) {
-            /* verify that there is another argument */
-            if ((idx+1) >= argc) {
-                std::exit(EXIT_FAILURE);
-            }
-            
-            idx++;
-            string param(argv[idx]);
-            /* determine if there is an equals sign. If there is, set the preference.
-             Otherwise, remove the preference */
-            size_t eqidx = param.find('=');
-            if (eqidx != string::npos){
-                string key = param.substr(0,eqidx);
-                string val = param.substr(eqidx+1);
-                setPreference(key,val);
-            } else {
-                unsetPreference(param);
-            }
-        } else if (matches_option(arg,"prefdel")){
-            /* verify that there is another argument */
-            if ( (idx+1) >= argc ){
-                std::exit(EXIT_FAILURE);
-            }
-            
-            idx++;
-            string param(argv[idx]);
-            /* remove the preference */
-            unsetPreference(param);
-        } else if (matches_option(arg,"preflist")) {
-            printAllPreferences();
-        } else if (matches_option(arg,"prefget")) {
-            /* verify that there is another argument */
-            if ( (idx+1) >= argc ){
-                std::exit(EXIT_FAILURE);
-            }
-            
-            idx++;
-            string param(argv[idx]);
-            /* print the preference */
-            printPreference(param);
-        } else if ( matches_option(arg,"appid") || matches_option(arg,"application-identifier") ){
-            printApplicationIdentifier();
-            std::exit(EXIT_SUCCESS);
-        } else if ( matches_option(arg,"gui") ) {
-            _gui = true;
-        }
-        idx++;
+    desc.add_options()
+    ("help,h",          "Display this help message")
+    ("version,v",       "Display the version number")
+    ("version-triplet", "Display the undecorated program version")
+    ("appid",           "Display the unique application identifier")
+    ("dataset,d",       po::value<string>(), "Reconstruct 3d model with given dataset path")
+    ("voxeldim",        po::value<int>()->default_value(32), "Set the voxelgrid dimension (value must be power of two)")
+    ("output,o",        po::value<string>()->default_value("export.ply"), "Set the output file name of the 3D reconstruction")
+    ("segmentation,s",  po::value<string>()->default_value("thresh"), "Set the segmentation method. Available options are thresh, grabcut")
+    ("prefset",         po::value<string>(), "Set the given preference")
+    ("prefdel",         po::value<string>(), "Unset the given preference")
+    ("prefget",         po::value<string>(), "Display the given preference")
+    ("preflist",        "List all preferences that are set")
+    ("gui",             "Run in graphical user interface mode")
+    ("verbose",         "Run in verbose mode")
+    ("verboseasync",    "Run in async verbose mode (write images to file instead of showing");
+    
+    try {
+        po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+        po::notify(vm);
+    } catch (po::error &e) {
+        cerr << e.what() << endl;
+        cerr << desc << endl;
+        std::exit(EXIT_FAILURE);
     }
 }
 
@@ -175,22 +173,6 @@ void App::initGUI() {
     /* display the main window */
     _mainwindow->setVisible(true);
     _mainwindow->move(leftmargin,topmargin);
-}
-
-void App::printHelpMessage() {
-    
-    cout << "Usage: " << getProjectInvocation() << " [options]" << endl;
-    cout << "Options:" << endl;
-    cout << "    --help                        Displays this help message." << endl;
-    cout << "    --version                     Prints the program version." << endl;
-    cout << "    --version-triplet             Prints the undecorated program version." << endl;
-    cout << "    --appid                       Prints the unique application identifier." << endl;
-    cout << "    --dataset <path> <dimension>  Reconstructs 3d object with given dataset path and voxel dimension." << endl;
-    cout << "    --prefset <key>=<val>         Sets the given preference." << endl;
-    cout << "    --prefdel <key>               Unsets the given preference." << endl;
-    cout << "    --prefget <key>               Prints the given preference." << endl;
-    cout << "    --preflist                    Lists all preferences that are set." << endl;
-    cout << "    --gui                         Run in graphical user interface mode." << endl;
 }
 
 void App::printVersionMessage() {
@@ -319,6 +301,16 @@ void App::printAllPreferences() const {
             cout << key << "=" << qvalstr << endl;
         }
     }
+}
+
+bool App::inVerboseMode() {
+    
+    return _verbose;
+}
+
+bool App::inVerboseAsyncMode() {
+    
+    return _verboseAsync;
 }
 
 string App::convert(const QString& str) const {
