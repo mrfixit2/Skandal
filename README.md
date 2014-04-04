@@ -1,15 +1,16 @@
-![Logo](tools/misc/logo.png)
+![Logo](tools/misc/Skandal-Logo.png)
 
 Skandal
 =======
 
 The goal of this project is to create a 3D scanner which can be used to create true to scale objects which can be further used for 3d printing.
 
+[![Build Status](https://travis-ci.org/NewProggie/Skandal.svg)](https://travis-ci.org/NewProggie/Skandal)
+
 This project requires:
  * Cross-platform Make (CMake) v2.6.2+
- * GNU Make or equivalent.
  * GCC or an alternative, reasonably conformant C++ compiler.
- * Boost C++ Libraries v1.37+ [HEADERS and LIBRARIES]
+ * Boost C++ Libraries v1.46+
  * Intel Threading Building Blocks v4.2+
  * Qt Framework v4.5+
  * VTK Framework v5.10+
