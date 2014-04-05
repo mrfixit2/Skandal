@@ -51,7 +51,12 @@ typedef struct {
 class VoxelCarving : public ExportMesh {
     
 public:
-    /** Constructor for voxel carving
+    /** Constructor for voxel carving.
+     *
+     * It is assumed that the dataset contains round table scans, so that
+     * the camera is circulating around the object while taking photos. With
+     * this assumption the boundingbox is calculated using two orthogonal
+     * camera images with the first and the dataset size / 4 th image.
      * @param ds Dataset with calibrated cameras and segmented images 
      * @param voxelGridDimension Used voxel grid dimension for reconstruction
      * @param method Segmentation method. Available are thresh and grabcut */

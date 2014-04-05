@@ -11,6 +11,7 @@
 
 #include "reconstruction/dataset.h"
 #include "reconstruction/voxelcarving.h"
+#include "lightestimation/lightdirestimation.h"
 
 using namespace std;
 namespace po = boost::program_options;
